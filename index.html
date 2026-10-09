@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus AI</title>
+
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #212121;
+  --panel: #171717;
+  --border: #343434;
+  --text: #f5f5f5;
+  --muted: #a3a3a3;
+  --accent: #10a37f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.6 system-ui, sans-serif;
+}
+
+.app {
+  display: flex;
+  height: 100dvh;
+}
+
+.sidebar {
+  width: 240px;
+  padding: 20px 14px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.brand {
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: -0.7px;
+  margin: 5px 8px 25px;
+}
+
+.brand span { color: var(--accent); }
+
+.new-chat {
+  width: 100%;
+  padding: 11px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
+
+.new-chat:hover { background: #282828; }
+
+.sidebar-note {
+  margin: 20px 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  height: 57px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+}
+
+.model-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.status {
+  font-size: 12px;
+  color: #7dd3a9;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 18px;
+  scroll-behavior: smooth;
+}
+
+.welcome {
+  max-width: 650px;
+  margin: 10vh auto 30px;
+  text-align: center;
+}
+
+.logo {
+  margin: auto auto 18px;
+  width: 55px;
+  height: 55px;
+  border-radius: 18px;
+  background: #123e35;
+  color: #8ae5c4;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.welcome h1 {
+  font-size: clamp(24px, 4vw, 34px);
+  letter-spacing: -1px;
+  margin: 0 0 8px;
+}
+
+.welcome p { color: var(--muted); }
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: center;
+  margin-top: 25px;
+}
+
+.suggestions button {
+  background: #292929;
+  border: 1px solid var(--border);
+  color: #eee;
+  padding: 9px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.suggestions button:hover { background: #383838; }
+
+.message {
+  max-width: 760px;
+  margin: 0 auto 25px;
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 31px;
+  height: 31px;
+  border-radius: 10px;
+  background: #333;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.message.assistant .avatar {
+  background: #123e35;
+  color: #8ae5c4;
+}
+
+.content {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  padding-top: 2px;
+}
+
+.composer-area {
+  padding: 12px 18px 17px;
+}
+
+.composer {
+  max-width: 760px;
+  margin: auto;
+  border: 1px solid #484848;
+  background: #2b2b2b;
+  border-radius: 18px;
+  padding: 10px 10px 10px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+textarea {
+  flex: 1;
+  min-width: 0;
+  max-height: 150px;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: white;
+  font: inherit;
+  padding: 7px 0;
+}
+
+textarea::placeholder { color: #a1a1a1; }
+
+.send {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 12px;
+  background: white;
+  color: #111;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.send:disabled { opacity: .4; cursor: not-allowed; }
+
+.disclaimer {
+  max-width: 760px;
+  margin: 8px auto 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .sidebar { display: none; }
+  .topbar { padding: 0 14px; }
+  .messages { padding: 20px 13px; }
+  .composer-area { padding: 10px 10px 14px; }
+  .welcome { margin-top: 7vh; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">Nexus<span>AI</span></div>
+    <button class="new-chat" id="newChat">＋ New chat</button>
+    <p class="sidebar-note">
+      Your conversations stay in this page session.
+    </p>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <strong>Nexus AI</strong>
+      <span class="model-label">Browser AI · 0.5B model</span>
+      <span class="status" id="status">Not loaded</span>
+    </header>
+
+    <section class="messages" id="messages" aria-live="polite">
+      <div class="welcome" id="welcome">
+        <div class="logo">N</div>
+        <h1>What can I help with?</h1>
+        <p>A personal AI chat that runs in your browser.</p>
+        <div class="suggestions">
+          <button data-prompt="Explain how artificial intelligence works in simple terms.">
+            Explain AI
+          </button>
+          <button data-prompt="Help me build a simple HTML game.">
+            Build a game
+          </button>
+          <button data-prompt="Give me three interesting coding project ideas for beginners.">
+            Coding ideas
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="composer-area">
+      <form class="composer" id="form">
+        <textarea id="input" rows="1"
+          placeholder="Message Nexus AI..."
+          aria-label="Your message"></textarea>
+        <button class="send" id="send" aria-label="Send message">↑</button>
+      </form>
+      <p class="disclaimer" id="hint">
+        The AI model downloads when you first start it. Initial loading may take a while.
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script type="module">
+import { pipeline } from
+  "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2";
+
+const MODEL = "onnx-community/Qwen2.5-0.5B-Instruct";
+
+const messagesEl = document.getElementById("messages");
+const welcome = document.getElementById("welcome");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const send = document.getElementById("send");
+const status = document.getElementById("status");
+const hint = document.getElementById("hint");
+
+let generator = null;
+let loadingPromise = null;
+let busy = false;
+let history = [];
+
+function setStatus(message) {
+  status.textContent = message;
+}
+
+function addMessage(role, text) {
+  if (welcome) welcome.style.display = "none";
+
+  const row = document.createElement("div");
+  row.className = `message ${role}`;
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = role === "user" ? "YOU" : "N";
+
+  const content = document.createElement("div");
+  content.className = "content";
+  content.textContent = text;
+
+  row.append(avatar, content);
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return content;
+}
+
+async function loadModel() {
+  if (generator) return generator;
+  if (loadingPromise) return loadingPromise;
+
+  loadingPromise = (async () => {
+    setStatus("Loading model…");
+    hint.textContent =
+      "Downloading the AI model. Keep this page open; the first download can be large.";
+
+    try {
+      try {
+        generator = await pipeline("text-generation", MODEL, {
+          device: "webgpu"
+        });
+      } catch (gpuError) {
+        console.warn("WebGPU unavailable; trying CPU/WASM.", gpuError);
+        setStatus("Trying CPU mode…");
+
+        generator = await pipeline("text-generation", MODEL, {
+          device: "wasm"
+        });
+      }
+
+      setStatus("Ready");
+      hint.textContent =
+        "Nexus AI runs locally in your browser. Answers may be imperfect.";
+      return generator;
+    } catch (error) {
+      generator = null;
+      loadingPromise = null;
+      setStatus("Load failed");
+      throw error;
+    }
+  })();
+
+  return loadingPromise;
+}
+
+async function chat(text) {
+  if (busy || !text.trim()) return;
+
+  busy = true;
+  send.disabled = true;
+  input.disabled = true;
+
+  addMessage("user", text);
+  history.push({ role: "user", content: text });
+
+  const replyEl = addMessage("assistant", "Loading the AI model…");
+
+  try {
+    const ai = await loadModel();
+    replyEl.textContent = "Thinking…";
+
+    const result = await ai(history, {
+      max_new_tokens: 220,
+      do_sample: true,
+      temperature: 0.7,
+      repetition_penalty: 1.1
+    });
+
+    const generated = result[0].generated_text;
+    let answer = "";
+
+    if (Array.isArray(generated)) {
+      answer = generated[generated.length - 1]?.content || "";
+    } else if (typeof generated === "string") {
+      answer = generated;
+    }
+
+    answer = answer.trim() || "I couldn't generate a response. Try again.";
+    replyEl.textContent = answer;
+    history.push({ role: "assistant", content: answer });
+
+    // Keep recent conversation context manageable.
+    if (history.length > 12) {
+      history = history.slice(-12);
+    }
+  } catch (error) {
+    console.error(error);
+    replyEl.textContent =
+      "I couldn't load or run the AI model. Check your internet connection, " +
+      "browser compatibility and available memory, then try again.";
+    setStatus("Error");
+  } finally {
+    busy = false;
+    send.disabled = false;
+    input.disabled = false;
+    input.focus();
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+}
+
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  const text = input.value.trim();
+  if (!text || busy) return;
+  input.value = "";
+  input.style.height = "auto";
+  chat(text);
+});
+
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 150) + "px";
+});
+
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    form.requestSubmit();
+  }
+});
+
+document.getElementById("newChat").addEventListener("click", () => {
+  if (busy) return;
+  history = [];
+  messagesEl.replaceChildren();
+  if (welcome) {
+    welcome.style.display = "";
+    messagesEl.appendChild(welcome);
+  }
+  setStatus(generator ? "Ready" : "Not loaded");
+});
+
+document.querySelectorAll("[data-prompt]").forEach(button => {
+  button.addEventListener("click", () => {
+    input.value = button.dataset.prompt;
+    form.requestSubmit();
+  });
+});
+</script>
+</body>
+</html>
